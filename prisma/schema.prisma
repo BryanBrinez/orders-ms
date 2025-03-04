@@ -1,0 +1,57 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Product {
+  id          String  @id @default(uuid()) // UUID generado automáticamente
+  name        String  // Nombre del producto
+  price       Decimal // Precio actual del producto
+  stock       Int     // Cantidad disponible en stock
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relación con OrderItem
+  orderItems OrderItem[]
+}
+
+model Order {
+  id         String      @id @default(uuid())
+  userId     String      // Relación con el usuario (sin foreign key)
+  status     OrderStatus @default(PENDING) // Estado del pedido
+  totalPrice Decimal     // Precio total del pedido
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  // Relación con los productos en el pedido
+  items      OrderItem[]
+}
+
+model OrderItem {
+  id        String   @id @default(uuid())
+  orderId   String   // Relación con el pedido
+  productId String   // Relación con el producto (debe existir antes)
+  quantity  Int      // Cantidad del producto en el pedido
+  price     Decimal  // Precio unitario del producto en el momento de la compra
+
+  // Relaciones
+  order     Order    @relation(fields: [orderId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id]) // FK al producto
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  CANCELLED
+}
